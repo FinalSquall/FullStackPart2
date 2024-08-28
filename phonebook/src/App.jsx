@@ -3,12 +3,14 @@ import Filter from "./components/Filter"
 import PersonForm from './components/PersonForm'
 import PersonList from './components/PersonList'
 import personsService from './services/persons'
+import Notification from './components/Notification'
 
 const App = () => {
   const [persons, setPersons] = useState([]) 
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [filter,setFilter] = useState('')
+  const [message, setMessage] = useState(null)
 
   const addNewPerson = (event) => {
     event.preventDefault()
@@ -21,6 +23,16 @@ const App = () => {
         .then(updatedPerson => {
           console.log('update response',updatedPerson)
           setPersons(persons.map(p => p.id === personFound.id ? updatedPerson : p))
+        })
+        .catch(error => {
+          setMessage({ /* Not sure if we need to edit a copy of the message in this case, I have made it an object, but it will always be null when set any way) */
+           text: `Phone number for '${personFound.name}' was already deleted from server`,
+           level:'error'
+          })
+          setPersons(persons.filter(p => p.id !== personFound.id))
+          setTimeout(() => {
+            setMessage(null)
+          }, 5000)
         })
       }
     } else {         
@@ -35,6 +47,18 @@ const App = () => {
         setPersons(persons.concat(personData))
         setNewName('')
         setNewNumber('')
+
+        setMessage(
+          {
+            text:`${personData.name} was added to the phonebook`,
+            level:'notify'
+          }
+          
+        )
+        setTimeout(() => {
+          setMessage(null)
+        }, 5000)
+
       })
     }
   }
@@ -74,6 +98,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={message}/>
       <Filter text={filter} handler={handleNameFilterChange}/>
       <h3>Add a New Person</h3>
       <PersonForm addNewPerson={addNewPerson} handleNameChange={handleNameChange} newName={newName} handleNumberChange={handleNumberChange} newNumber={newNumber}/>
